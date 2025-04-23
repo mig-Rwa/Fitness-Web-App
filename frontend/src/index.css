@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  /* Fun, dark blue gradient background for the whole app */
+  background: linear-gradient(135deg, #162447 0%, #1f4068 50%, #1b1b2f 100%);
+  min-height: 100vh;
+}
