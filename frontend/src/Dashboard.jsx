@@ -56,7 +56,7 @@ function DashboardAnimations() {
         {workoutOptions.map(option => (
           <div
             key={option.name}
-            className="flex flex-col items-center bg-blue-900 bg-opacity-80 rounded-2xl shadow-xl p-8 w-64 hover:scale-105 hover:shadow-2xl transition transform cursor-pointer border-2 border-transparent hover:border-yellow-400"
+            className="flex flex-col items-center bg-black bg-opacity-60 rounded-2xl shadow-xl p-8 w-64 hover:scale-105 hover:shadow-2xl transition transform cursor-pointer border-2 border-transparent hover:border-yellow-400"
           >
             <div className="mb-4">{option.icon}</div>
             <h3 className="text-xl font-bold text-yellow-300 mb-2 tracking-wide">{option.name}</h3>
@@ -108,7 +108,7 @@ export default function Dashboard() {
     }}>
       <div className="min-h-screen flex flex-col" style={{ minHeight: '100vh', width: '100vw', position: 'absolute', top: 0, left: 0 }}>
         {/* Header */}
-        <div className="flex justify-between items-center p-6 bg-blue-900 bg-opacity-95 shadow-lg">
+        <div className="flex justify-between items-center p-6 bg-black bg-opacity-95 shadow-lg">
           <div className="flex items-center">
             <button
               className="text-4xl font-extrabold text-yellow-400 drop-shadow tracking-wide font-serif hover:underline focus:outline-none"
@@ -118,7 +118,7 @@ export default function Dashboard() {
                 navigate("/dashboard");
               }}
             >
-              MigFit
+              GETUM Fitness
             </button>
           </div>
           <div className="flex items-center space-x-6">
@@ -129,16 +129,16 @@ export default function Dashboard() {
         {/* Main Content Area */}
         <div className="flex flex-1">
           {/* Sidebar */}
-          <aside className="w-64 bg-gradient-to-b from-blue-900 to-blue-950 p-6 flex flex-col space-y-6 border-r-2 border-blue-800 min-h-full sticky top-0 shadow-xl">
+          <aside className="w-64 bg-black bg-opacity-95 p-6 flex flex-col space-y-6 border-r-2 border-black min-h-full sticky top-0 shadow-xl">
             <div className="flex flex-col items-center mb-6">
-              <img src="/images/lean pose.jpg" alt="Sidebar Visual" className="w-32 h-32 object-cover rounded-xl border-2 border-blue-800 shadow mb-2" onError={e => e.target.style.display='none'} />
+              <img src="/images/lean pose.jpg" alt="Sidebar Visual" className="w-32 h-32 object-cover rounded-xl border-2 border-black shadow mb-2" onError={e => e.target.style.display='none'} />
               <span className="text-blue-200 text-sm mt-2">Sidebar Visual</span>
             </div>
             <nav className="flex flex-col gap-2">
               {sidebarLinks.map((link, i) => (
                 <button
                   key={link.name}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg font-semibold text-blue-100 transition hover:bg-blue-800 hover:text-yellow-300 text-lg ${tab === i ? "bg-blue-800 border-l-4 border-yellow-400" : ""}`}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-lg font-semibold text-blue-100 transition hover:bg-black hover:text-yellow-300 text-lg ${tab === i ? "bg-black border-l-4 border-yellow-400" : ""}`}
                   onClick={() => {
                     setTab(i);
                     if (link.name === "Dashboard Home") navigate("/dashboard");
@@ -157,7 +157,7 @@ export default function Dashboard() {
           {/* Main Section */}
           <main className="flex-1 px-10 py-8 flex flex-col gap-10">
             {/* Tab Content or Nested Route */}
-            <div className="flex-1 rounded-xl p-8 shadow-lg mt-2 flex flex-col justify-center items-center">
+            <div className="flex-1 rounded-xl p-8 shadow-lg mt-2 flex flex-col justify-center items-center bg-black bg-opacity-50">
               {isRootDashboard ? (TABS[tab] ? TABS[tab].component : null) : <Outlet />}
             </div>
           </main>

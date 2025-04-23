@@ -9,6 +9,8 @@ import Chest from "./musclegroups/Chest";
 import Legs from "./musclegroups/Legs";
 import Core from "./musclegroups/Core";
 import Arms from "./musclegroups/Arms";
+import NutritionTips from "./NutritionTips";
+import CaloriePlan from "./CaloriePlan";
 
 // Set background image for the whole app
 const BACKGROUND_IMAGE = "/images/exercize-database.jpg";
@@ -46,6 +48,8 @@ export default function App() {
               <Route path="musclegroups/core" element={<Core />} />
               <Route path="musclegroups/arms" element={<Arms />} />
             </Route>
+            <Route path="/nutrition" element={<NutritionTips />} />
+            <Route path="/nutrition/:calories" element={<CaloriePlan />} />
           </Routes>
         </BrowserRouter>
       </div>
