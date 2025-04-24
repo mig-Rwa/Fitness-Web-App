@@ -14,7 +14,7 @@ export default function ProgressTracker() {
 
   const fetchProgress = () => {
     setLoading(true);
-    fetch(`http://localhost:4100/api/progress?user_id=${user.id}`)
+    fetch(`https://fitness-web-app-w4ry.onrender.com/api/progress?user_id=${user.id}`)
       .then(res => res.json())
       .then(data => { setProgress(data); setLoading(false); })
       .catch(() => { setError("Failed to fetch progress"); setLoading(false); });
@@ -25,7 +25,7 @@ export default function ProgressTracker() {
   const addProgress = async (e) => {
     e.preventDefault();
     setError("");
-    const res = await fetch("http://localhost:4100/api/progress", {
+    const res = await fetch("https://fitness-web-app-w4ry.onrender.com/api/progress", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ user_id: user.id, date, weight, reps, duration, notes }),
@@ -36,7 +36,7 @@ export default function ProgressTracker() {
   };
 
   const deleteProgress = async (id) => {
-    await fetch(`http://localhost:4100/api/progress/${id}`, { method: "DELETE" });
+    await fetch(`https://fitness-web-app-w4ry.onrender.com/api/progress/${id}`, { method: "DELETE" });
     setProgress(progress.filter(p => p.id !== id));
   };
 

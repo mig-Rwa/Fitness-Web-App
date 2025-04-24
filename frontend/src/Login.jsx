@@ -11,7 +11,7 @@ export default function Login({ onSwitch }) {
     e.preventDefault();
     setError("");
     try {
-      const res = await fetch("http://localhost:4100/api/auth/login", {
+      const res = await fetch("https://fitness-web-app-w4ry.onrender.com/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),

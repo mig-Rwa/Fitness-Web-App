@@ -12,7 +12,7 @@ export default function WorkoutPlan() {
 
   const fetchWorkouts = () => {
     setLoading(true);
-    fetch(`http://localhost:4100/api/workouts?user_id=${user.id}`)
+    fetch(`https://fitness-web-app-w4ry.onrender.com/api/workouts?user_id=${user.id}`)
       .then(res => res.json())
       .then(data => {
         setWorkouts(data);
@@ -32,7 +32,7 @@ export default function WorkoutPlan() {
   const addWorkout = async (e) => {
     e.preventDefault();
     setError("");
-    const res = await fetch("http://localhost:4100/api/workouts", {
+    const res = await fetch("https://fitness-web-app-w4ry.onrender.com/api/workouts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ user_id: user.id, name, description, date }),
@@ -46,7 +46,7 @@ export default function WorkoutPlan() {
   };
 
   const deleteWorkout = async (id) => {
-    await fetch(`http://localhost:4100/api/workouts/${id}`, { method: "DELETE" });
+    await fetch(`https://fitness-web-app-w4ry.onrender.com/api/workouts/${id}`, { method: "DELETE" });
     setWorkouts(workouts.filter(w => w.id !== id));
   };
 
