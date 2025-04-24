@@ -11,6 +11,8 @@ import Core from "./musclegroups/Core";
 import Arms from "./musclegroups/Arms";
 import NutritionTips from "./NutritionTips";
 import CaloriePlan from "./CaloriePlan";
+import CalorieCalculator from "./CalorieCalculator";
+import SettingsTab from "./SettingsTab"; // Import the SettingsTab component
 
 // Set background image for the whole app
 const BACKGROUND_IMAGE = "/images/exercize-database.jpg";
@@ -47,6 +49,8 @@ export default function App() {
               <Route path="musclegroups/legs" element={<Legs />} />
               <Route path="musclegroups/core" element={<Core />} />
               <Route path="musclegroups/arms" element={<Arms />} />
+              <Route path="caloriecalculator" element={<CalorieCalculator />} />
+              <Route path="settings" element={<SettingsTab />} /> // Add the nested route for settings
             </Route>
             <Route path="/nutrition" element={<NutritionTips />} />
             <Route path="/nutrition/:calories" element={<CaloriePlan />} />

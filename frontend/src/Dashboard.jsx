@@ -4,6 +4,8 @@ import WorkoutPlan from "./WorkoutPlan";
 import ProgressTracker from "./ProgressTracker";
 import ExerciseLibrary from "./ExerciseLibrary";
 import NutritionTips from "./NutritionTips";
+import CalorieCalculator from "./CalorieCalculator";
+import SettingsTab from "./SettingsTab";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { FaDumbbell, FaChartLine, FaBookOpen, FaLeaf, FaHome, FaRunning, FaHeartbeat, FaBolt, FaUserShield } from "react-icons/fa";
 
@@ -36,6 +38,8 @@ const TABS = [
   { name: "Progress", component: <ProgressTracker /> },
   { name: "Exercise Library", component: <ExerciseLibrary /> },
   { name: "Nutrition", component: <NutritionTips /> },
+  { name: "Calorie Calculator", component: <CalorieCalculator /> },
+  { name: "Settings", component: <SettingsTab /> },
 ];
 
 const sidebarLinks = [
@@ -44,6 +48,8 @@ const sidebarLinks = [
   { name: "Progress", icon: <FaChartLine size={24} /> },
   { name: "Exercise Library", icon: <FaBookOpen size={24} /> },
   { name: "Nutrition", icon: <FaLeaf size={24} /> },
+  { name: "Calorie Calculator", icon: <FaLeaf size={24} /> },
+  { name: "Settings", icon: <FaUserShield size={24} /> },
 ];
 
 const DASHBOARD_BG_IMAGE = "/images/exercize-database.jpg";
@@ -122,7 +128,7 @@ export default function Dashboard() {
             </button>
           </div>
           <div className="flex items-center space-x-6">
-            <span className="text-blue-100 font-semibold text-lg">Hey, {user?.name || "Fitness Fan"}!</span>
+            <span className="text-blue-100 font-semibold text-lg">Hey, {user?.name || user?.nickname || "Fitness Fan"}!</span>
             <button onClick={handleLogout} className="px-6 py-2 bg-red-600 text-white rounded font-semibold hover:bg-red-800 shadow-md">Logout</button>
           </div>
         </div>
@@ -146,6 +152,8 @@ export default function Dashboard() {
                     if (link.name === "Progress") navigate("/dashboard");
                     if (link.name === "Exercise Library") navigate("/dashboard/exerciselibrary");
                     if (link.name === "Nutrition") navigate("/dashboard");
+                    if (link.name === "Calorie Calculator") navigate("/dashboard/caloriecalculator");
+                    if (link.name === "Settings") navigate("/dashboard/settings");
                   }}
                 >
                   <span>{link.icon}</span>
