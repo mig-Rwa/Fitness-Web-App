@@ -62,7 +62,7 @@ function MainApp({ showSignup, setShowSignup }) {
   if (user) return <Dashboard />;
   return (
     <div className="flex flex-col items-center justify-center min-h-screen" style={{ minHeight: '100vh', background: 'rgba(20, 30, 60, 0.7)', borderRadius: 20, margin: 24 }}>
-      <h1 className="text-4xl font-bold mb-6 text-blue-200 drop-shadow-lg animate-bounce">MigFitness</h1>
+      <h1 className="text-4xl font-bold mb-6 text-blue-200 drop-shadow-lg animate-bounce">GETUM Fitness</h1>
       <p className="text-lg text-blue-100 mb-8 max-w-xl text-center font-semibold">
         Welcome to your personal fitness coach! Get personalized workout plans, track your progress, and access nutrition tips to achieve your goals.
       </p>
