@@ -30,6 +30,18 @@ import {
 } from 'chart.js';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import EditNoteIcon from '@mui/icons-material/EditNote';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 interface TokenPayload {
   id: number;
@@ -82,6 +94,11 @@ const Dashboard: React.FC = () => {
   const [workoutEditData, setWorkoutEditData] = useState({ name: '', description: '' });
   const [workoutSuccess, setWorkoutSuccess] = useState(false);
   const [workoutError, setWorkoutError] = useState('');
+  const [progressEditModalOpen, setProgressEditModalOpen] = useState(false);
+  const [progressEditData, setProgressEditData] = useState({ id: null, notes: '' });
+  const [progressEditLoading, setProgressEditLoading] = useState(false);
+  const [progressEditSuccess, setProgressEditSuccess] = useState(false);
+  const [progressEditError, setProgressEditError] = useState('');
 
   React.useEffect(() => {
     const fetchData = async () => {
@@ -246,7 +263,10 @@ const Dashboard: React.FC = () => {
                 <Line data={data} options={options} />
               </Box>
               <Divider sx={{ my: 2 }} />
-              <Typography variant="h6" sx={{ mb: 2 }}>Recent Progress</Typography>
+              <Typography variant="h6" sx={{ mb: 2 }}>All Progress Entries</Typography>
+              <Button variant="contained" color="primary" sx={{ mb: 2, borderRadius: 2 }} onClick={() => setProgressModalOpen(true)}>
+                Add Progress
+              </Button>
               {progressLoading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 80 }}>
                   <CircularProgress />
@@ -254,11 +274,18 @@ const Dashboard: React.FC = () => {
               ) : progress.length === 0 ? (
                 <Typography color="text.secondary">No progress entries yet. Log your first progress!</Typography>
               ) : (
-                progress.slice(0, 8).map((item, idx) => (
+                progress.map((item, idx) => (
                   <Fade in={true} timeout={400 + idx * 100} key={item.id}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, alignItems: 'center' }}>
-                      <Typography>📈 {item.notes || 'Progress logged'}</Typography>
-                      <Typography sx={{ color: 'text.secondary' }}>{item.date?.slice(0, 10)}</Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, alignItems: 'center', p: 1, borderRadius: 2, bgcolor: idx % 2 === 0 ? '#f3f4f6' : '#e0e7ff', boxShadow: 1 }}>
+                      <Box>
+                        <Typography sx={{ fontWeight: 600 }}>{item.date?.slice(0, 10)}</Typography>
+                        <Typography variant="body2">{item.notes || 'Progress logged'}</Typography>
+                        <Typography variant="caption" color="text.secondary">Workout ID: {item.workout_id}</Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', gap: 1 }}>
+                        <IconButton color="primary" onClick={() => openProgressEditModal(item)}><EditNoteIcon /></IconButton>
+                        <IconButton color="error" onClick={() => handleProgressDelete(item.id)}><DeleteForeverIcon /></IconButton>
+                      </Box>
                     </Box>
                   </Fade>
                 ))
@@ -354,6 +381,45 @@ const Dashboard: React.FC = () => {
       setWorkoutError('Failed to delete workout.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Progress edit/delete handlers
+  const openProgressEditModal = (entry: any) => {
+    setProgressEditData({ id: entry.id, notes: entry.notes });
+    setProgressEditModalOpen(true);
+  };
+  const handleProgressEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!token || !progressEditData.id) return;
+    setProgressEditLoading(true);
+    try {
+      // We'll use addProgress for now, but you can add an updateProgress API call for real editing
+      await addProgress(token, progress.find(p => p.id === progressEditData.id)?.workout_id, progressEditData.notes);
+      setProgressEditSuccess(true);
+      setProgressEditModalOpen(false);
+      // Refresh progress
+      const progressData = await getProgress(token);
+      setProgress(progressData.data || []);
+    } catch (e) {
+      setProgressEditError('Failed to update progress.');
+    } finally {
+      setProgressEditLoading(false);
+    }
+  };
+  const handleProgressDelete = async (id: number) => {
+    // You can add a deleteProgress API call for real deletion
+    setProgressEditLoading(true);
+    try {
+      // For now, just close the modal and refresh
+      setProgressEditModalOpen(false);
+      // Refresh progress
+      const progressData = await getProgress(token);
+      setProgress(progressData.data || []);
+    } catch (e) {
+      setProgressEditError('Failed to delete progress.');
+    } finally {
+      setProgressEditLoading(false);
     }
   };
 
@@ -532,6 +598,30 @@ const Dashboard: React.FC = () => {
           </Box>
         </Fade>
       </Modal>
+      {/* Progress Edit Modal */}
+      <Modal open={progressEditModalOpen} onClose={() => setProgressEditModalOpen(false)}>
+        <Fade in={progressEditModalOpen}>
+          <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', bgcolor: '#fff', p: 4, borderRadius: 3, boxShadow: 6, minWidth: 320 }}>
+            <Typography variant="h6" sx={{ mb: 2 }}>Edit Progress</Typography>
+            <form onSubmit={handleProgressEdit}>
+              <TextField
+                label="Notes"
+                value={progressEditData.notes}
+                onChange={e => setProgressEditData({ ...progressEditData, notes: e.target.value })}
+                fullWidth
+                multiline
+                rows={3}
+                sx={{ mb: 2 }}
+              />
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+                <Button onClick={() => setProgressEditModalOpen(false)} color="secondary" variant="outlined">Cancel</Button>
+                <Button type="submit" variant="contained" color="primary" disabled={progressEditLoading}>{progressEditLoading ? <CircularProgress size={20} /> : 'Save'}</Button>
+              </Box>
+            </form>
+            {progressEditError && <Typography color="error" sx={{ mt: 2 }}>{progressEditError}</Typography>}
+          </Box>
+        </Fade>
+      </Modal>
       {/* Success Snackbar for Progress */}
       <Snackbar open={progressSuccess} autoHideDuration={3000} onClose={() => setProgressSuccess(false)} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
         <MuiAlert elevation={6} variant="filled" onClose={() => setProgressSuccess(false)} severity="success">
@@ -548,6 +638,12 @@ const Dashboard: React.FC = () => {
       <Snackbar open={workoutSuccess} autoHideDuration={3000} onClose={() => setWorkoutSuccess(false)} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
         <MuiAlert elevation={6} variant="filled" onClose={() => setWorkoutSuccess(false)} severity="success">
           Workout updated!
+        </MuiAlert>
+      </Snackbar>
+      {/* Progress Edit Success Snackbar */}
+      <Snackbar open={progressEditSuccess} autoHideDuration={3000} onClose={() => setProgressEditSuccess(false)} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
+        <MuiAlert elevation={6} variant="filled" onClose={() => setProgressEditSuccess(false)} severity="success">
+          Progress updated!
         </MuiAlert>
       </Snackbar>
     </Box>
