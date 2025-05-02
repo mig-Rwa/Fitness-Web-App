@@ -16,4 +16,21 @@ export const addWorkout = async (token: string, name: string, description: strin
     { headers: { Authorization: `Bearer ${token}` } }
   );
   return response.data;
+};
+
+export const updateWorkout = async (token: string, id: number, name: string, description: string) => {
+  const response = await axios.put(
+    `${API_URL}/workouts/${id}`,
+    { name, description },
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  return response.data;
+};
+
+export const deleteWorkout = async (token: string, id: number) => {
+  const response = await axios.delete(
+    `${API_URL}/workouts/${id}`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  return response.data;
 }; 
