@@ -3,7 +3,7 @@ const router = express.Router();
 const db = require('../config/database');
 const auth = require('../middleware/auth');
 
-// Get all workouts for a user
+// Get all workouts for a user (with exercises)
 router.get('/', auth, (req, res) => {
     db.all('SELECT * FROM workouts WHERE user_id = ?', [req.user.id], (err, workouts) => {
         if (err) {
@@ -12,14 +12,28 @@ router.get('/', auth, (req, res) => {
                 message: 'Error fetching workouts'
             });
         }
-        res.json({
-            status: 'success',
-            data: workouts
-        });
+        const workoutIds = workouts.map(w => w.id);
+        if (workoutIds.length === 0) {
+            return res.json({ status: 'success', data: [] });
+        }
+        db.all(
+            `SELECT * FROM exercises WHERE workout_id IN (${workoutIds.map(() => '?').join(',')})`,
+            workoutIds,
+            (err2, exercises) => {
+                if (err2) {
+                    return res.status(500).json({ status: 'error', message: 'Error fetching exercises' });
+                }
+                const workoutsWithExercises = workouts.map(w => ({
+                    ...w,
+                    exercises: exercises.filter(e => e.workout_id === w.id)
+                }));
+                res.json({ status: 'success', data: workoutsWithExercises });
+            }
+        );
     });
 });
 
-// Get a single workout
+// Get a single workout (with exercises)
 router.get('/:id', auth, (req, res) => {
     db.get('SELECT * FROM workouts WHERE id = ? AND user_id = ?', [req.params.id, req.user.id], (err, workout) => {
         if (err) {
@@ -34,9 +48,11 @@ router.get('/:id', auth, (req, res) => {
                 message: 'Workout not found'
             });
         }
-        res.json({
-            status: 'success',
-            data: workout
+        db.all('SELECT * FROM exercises WHERE workout_id = ?', [workout.id], (err2, exercises) => {
+            if (err2) {
+                return res.status(500).json({ status: 'error', message: 'Error fetching exercises' });
+            }
+            res.json({ status: 'success', data: { ...workout, exercises } });
         });
     });
 });

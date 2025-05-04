@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import {
-  Box, Button, Card, CardContent, Typography, Avatar, Drawer, List, ListItem, ListItemIcon, ListItemText, Divider, IconButton, Switch, AppBar, Toolbar, CssBaseline, Modal, TextField, Fade, ListItemButton
+  Box, Button, Card, CardContent, Typography, Avatar, Drawer, List, ListItem, ListItemIcon, ListItemText, Divider, IconButton, Switch, AppBar, Toolbar, CssBaseline, Modal, TextField, Fade, ListItemButton, MenuItem, Select, InputLabel, FormControl, RadioGroup, Radio
 } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
@@ -11,7 +11,7 @@ import AddCircleIcon from '@mui/icons-material/AddCircle';
 import LogoutIcon from '@mui/icons-material/Logout';
 import WbSunnyIcon from '@mui/icons-material/WbSunny';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
-import { getWorkouts, addWorkout, updateWorkout, deleteWorkout } from '../services/workoutService';
+import { getWorkouts, addWorkout, updateWorkout, deleteWorkout, addExercise, deleteExercise, updateExercise } from '../services/workoutService';
 import { getProgress, addProgress } from '../services/progressService';
 import CircularProgress from '@mui/material/CircularProgress';
 import Snackbar from '@mui/material/Snackbar';
@@ -32,6 +32,8 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditNoteIcon from '@mui/icons-material/EditNote';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import RestaurantIcon from '@mui/icons-material/Restaurant';
+import LocalDiningIcon from '@mui/icons-material/LocalDining';
 
 ChartJS.register(
   CategoryScale,
@@ -60,6 +62,16 @@ const sections = [
   { key: 'workouts', label: 'Workouts', icon: <FitnessCenterIcon /> },
   { key: 'progress', label: 'Progress', icon: <TimelineIcon /> },
   { key: 'add', label: 'Add Workout', icon: <AddCircleIcon /> },
+  { key: 'food-diary', label: 'Food Diary', icon: <RestaurantIcon /> },
+  { key: 'bmi', label: 'BMI Calculator', icon: <FitnessCenterIcon /> },
+  { key: 'body-fat', label: 'Body Fat Calculator', icon: <FitnessCenterIcon /> },
+  { key: 'calorie-estimator', label: 'Calorie Estimator', icon: <LocalDiningIcon /> },
+];
+
+const progressTypes = [
+  { value: 'workout', label: 'Workout Progress' },
+  { value: 'nutrition', label: 'Nutrition Progress' },
+  { value: 'strength', label: 'Weight/Strength Progress' },
 ];
 
 const Dashboard: React.FC = () => {
@@ -99,6 +111,22 @@ const Dashboard: React.FC = () => {
   const [progressEditLoading, setProgressEditLoading] = useState(false);
   const [progressEditSuccess, setProgressEditSuccess] = useState(false);
   const [progressEditError, setProgressEditError] = useState('');
+  const [addExerciseModalOpen, setAddExerciseModalOpen] = useState(false);
+  const [exerciseForm, setExerciseForm] = useState({ name: '', sets: '', reps: '', weight: '', rest: '', notes: '' });
+  const [exerciseTargetWorkout, setExerciseTargetWorkout] = useState<any>(null);
+  const [exerciseLoading, setExerciseLoading] = useState(false);
+  const [exerciseError, setExerciseError] = useState('');
+  const [deleteExerciseLoading, setDeleteExerciseLoading] = useState(false);
+  const [deleteExerciseId, setDeleteExerciseId] = useState<number | null>(null);
+  const [deleteExerciseConfirmOpen, setDeleteExerciseConfirmOpen] = useState(false);
+  const [editExerciseModalOpen, setEditExerciseModalOpen] = useState(false);
+  const [editExerciseForm, setEditExerciseForm] = useState({ id: null, name: '', sets: '', reps: '', weight: '', rest: '', notes: '' });
+  const [editExerciseLoading, setEditExerciseLoading] = useState(false);
+  const [editExerciseError, setEditExerciseError] = useState('');
+  const [progressType, setProgressType] = useState('workout');
+  const [progressWorkoutId, setProgressWorkoutId] = useState<number | null>(null);
+  const [nutritionFields, setNutritionFields] = useState({ calories: '', protein: '', carbs: '', fat: '' });
+  const [strengthFields, setStrengthFields] = useState({ exercise: '', previousWeight: '', newWeight: '', reps: '' });
 
   React.useEffect(() => {
     const fetchData = async () => {
@@ -200,12 +228,35 @@ const Dashboard: React.FC = () => {
                     )}
                     {workouts.slice(0, 3).map((item, idx) => (
                       <Fade in={true} timeout={400 + idx * 100} key={item.id}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, alignItems: 'center', cursor: 'pointer', transition: 'box-shadow 0.2s', '&:hover': { boxShadow: 4, bgcolor: '#e0e7ff' } }} onClick={() => openWorkoutModal(item)}>
-                          <Typography>🏋️‍♂️ {item.name}</Typography>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Typography sx={{ color: 'text.secondary' }}>{item.created_at?.slice(0, 10)}</Typography>
-                            <Button size="small" variant="outlined" color="primary" startIcon={<AssignmentTurnedInIcon />} sx={{ ml: 1, borderRadius: 2 }} onClick={e => { e.stopPropagation(); setSelectedWorkout(item); setProgressModalOpen(true); }}>Log Progress</Button>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', mb: 2, p: 2, borderRadius: 2, boxShadow: 1, bgcolor: '#f8fafc' }}>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                            <Typography variant="h6">🏋️‍♂️ {item.name}</Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Typography sx={{ color: 'text.secondary' }}>{item.created_at?.slice(0, 10)}</Typography>
+                              <Button size="small" variant="outlined" color="primary" startIcon={<AssignmentTurnedInIcon />} sx={{ ml: 1, borderRadius: 2 }} onClick={e => { e.stopPropagation(); setSelectedWorkout(item); setProgressModalOpen(true); }}>Log Progress</Button>
+                            </Box>
                           </Box>
+                          {/* Exercises List */}
+                          {item.exercises && item.exercises.length > 0 && (
+                            <Box sx={{ ml: 2, mb: 1 }}>
+                              <Typography variant="subtitle2" sx={{ color: '#6366f1', mb: 1 }}>Exercises:</Typography>
+                              {item.exercises.map((ex: any) => (
+                                <Box key={ex.id} sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 0.5, p: 1, bgcolor: '#e0e7ff', borderRadius: 1 }}>
+                                  <Typography sx={{ fontWeight: 500 }}>{ex.name}</Typography>
+                                  <Typography variant="body2">Sets: {ex.sets || '-'}</Typography>
+                                  <Typography variant="body2">Reps: {ex.reps || '-'}</Typography>
+                                  <Typography variant="body2">Weight: {ex.weight || '-'} kg</Typography>
+                                  <Typography variant="body2">Rest: {ex.rest || '-'}s</Typography>
+                                  {ex.notes && <Typography variant="body2" sx={{ fontStyle: 'italic', color: '#64748b' }}>({ex.notes})</Typography>}
+                                  <IconButton color="error" size="small" onClick={() => handleDeleteExerciseClick(ex.id)}><DeleteForeverIcon /></IconButton>
+                                  <IconButton color="primary" size="small" onClick={() => handleOpenEditExerciseModal(ex)}><EditIcon /></IconButton>
+                                </Box>
+                              ))}
+                            </Box>
+                          )}
+                          <Button variant="contained" color="secondary" size="small" sx={{ mt: 1, width: 'fit-content' }} onClick={() => handleOpenAddExerciseModal(item)}>
+                            Add Exercise
+                          </Button>
                         </Box>
                       </Fade>
                     ))}
@@ -297,6 +348,18 @@ const Dashboard: React.FC = () => {
         setAddModalOpen(true);
         setActiveSection('workouts');
         return null;
+      case 'food-diary':
+        navigate('/food-diary');
+        return null;
+      case 'bmi':
+        navigate('/bmi');
+        return null;
+      case 'body-fat':
+        navigate('/body-fat');
+        return null;
+      case 'calorie-estimator':
+        navigate('/calorie-estimator');
+        return null;
       default:
         return null;
     }
@@ -325,14 +388,28 @@ const Dashboard: React.FC = () => {
   // Add Progress Modal
   const handleAddProgress = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!token || !selectedWorkout) return;
+    if (!token) return;
+    let workoutId = selectedWorkout?.id || progressWorkoutId;
+    if (!workoutId) return;
     setProgressLoading(true);
     try {
-      await addProgress(token, selectedWorkout.id, progressNotes);
+      let notes = progressNotes;
+      let extra = {};
+      if (progressType === 'nutrition') {
+        notes = `Calories: ${nutritionFields.calories}, Protein: ${nutritionFields.protein}, Carbs: ${nutritionFields.carbs}, Fat: ${nutritionFields.fat}. ${progressNotes}`;
+        extra = nutritionFields;
+      } else if (progressType === 'strength') {
+        notes = `Exercise: ${strengthFields.exercise}, Previous Weight: ${strengthFields.previousWeight}, New Weight: ${strengthFields.newWeight}, Reps: ${strengthFields.reps}. ${progressNotes}`;
+        extra = strengthFields;
+      }
+      await addProgress(token, workoutId, notes); // Optionally pass extra/type to backend if supported
       setProgressSuccess(true);
       setProgressModalOpen(false);
       setProgressNotes('');
       setSelectedWorkout(null);
+      setProgressWorkoutId(null);
+      setNutritionFields({ calories: '', protein: '', carbs: '', fat: '' });
+      setStrengthFields({ exercise: '', previousWeight: '', newWeight: '', reps: '' });
       // Refresh progress
       const progressData = await getProgress(token);
       setProgress(progressData.data || []);
@@ -423,6 +500,98 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  // Exercise handlers
+  const handleOpenAddExerciseModal = (workout: any) => {
+    setExerciseTargetWorkout(workout);
+    setExerciseForm({ name: '', sets: '', reps: '', weight: '', rest: '', notes: '' });
+    setExerciseError('');
+    setAddExerciseModalOpen(true);
+  };
+  const handleAddExercise = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!token || !exerciseTargetWorkout) return;
+    setExerciseLoading(true);
+    setExerciseError('');
+    try {
+      await addExercise(token, exerciseTargetWorkout.id, {
+        name: exerciseForm.name,
+        sets: exerciseForm.sets ? Number(exerciseForm.sets) : undefined,
+        reps: exerciseForm.reps ? Number(exerciseForm.reps) : undefined,
+        weight: exerciseForm.weight ? Number(exerciseForm.weight) : undefined,
+        rest: exerciseForm.rest ? Number(exerciseForm.rest) : undefined,
+        notes: exerciseForm.notes,
+      });
+      setAddExerciseModalOpen(false);
+      setExerciseForm({ name: '', sets: '', reps: '', weight: '', rest: '', notes: '' });
+      // Refresh workouts
+      const data = await getWorkouts(token);
+      setWorkouts(data.data || []);
+    } catch (e) {
+      setExerciseError('Failed to add exercise.');
+    } finally {
+      setExerciseLoading(false);
+    }
+  };
+
+  const handleDeleteExerciseClick = (exerciseId: number) => {
+    setDeleteExerciseId(exerciseId);
+    setDeleteExerciseConfirmOpen(true);
+  };
+  const handleDeleteExercise = async () => {
+    if (!token || !deleteExerciseId) return;
+    setDeleteExerciseLoading(true);
+    try {
+      await deleteExercise(token, deleteExerciseId);
+      setDeleteExerciseConfirmOpen(false);
+      setDeleteExerciseId(null);
+      // Refresh workouts
+      const data = await getWorkouts(token);
+      setWorkouts(data.data || []);
+    } catch (e) {
+      setError('Failed to delete exercise.');
+    } finally {
+      setDeleteExerciseLoading(false);
+    }
+  };
+
+  const handleOpenEditExerciseModal = (exercise: any) => {
+    setEditExerciseForm({
+      id: exercise.id,
+      name: exercise.name || '',
+      sets: exercise.sets?.toString() || '',
+      reps: exercise.reps?.toString() || '',
+      weight: exercise.weight?.toString() || '',
+      rest: exercise.rest?.toString() || '',
+      notes: exercise.notes || ''
+    });
+    setEditExerciseError('');
+    setEditExerciseModalOpen(true);
+  };
+  const handleEditExercise = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!token || !editExerciseForm.id) return;
+    setEditExerciseLoading(true);
+    setEditExerciseError('');
+    try {
+      await updateExercise(token, editExerciseForm.id, {
+        name: editExerciseForm.name,
+        sets: editExerciseForm.sets ? Number(editExerciseForm.sets) : undefined,
+        reps: editExerciseForm.reps ? Number(editExerciseForm.reps) : undefined,
+        weight: editExerciseForm.weight ? Number(editExerciseForm.weight) : undefined,
+        rest: editExerciseForm.rest ? Number(editExerciseForm.rest) : undefined,
+        notes: editExerciseForm.notes,
+      });
+      setEditExerciseModalOpen(false);
+      // Refresh workouts
+      const data = await getWorkouts(token);
+      setWorkouts(data.data || []);
+    } catch (e) {
+      setEditExerciseError('Failed to update exercise.');
+    } finally {
+      setEditExerciseLoading(false);
+    }
+  };
+
   return (
     <Box sx={{ display: 'flex', bgcolor: darkMode ? '#18181b' : '#f8fafc', minHeight: '100vh' }}>
       <CssBaseline />
@@ -445,26 +614,21 @@ const Dashboard: React.FC = () => {
         <Divider sx={{ my: 2, bgcolor: '#a5b4fc' }} />
         <List>
           {sections.map(section => (
-            <ListItem key={section.key} disablePadding>
-              <ListItemButton
-                selected={activeSection === section.key}
-                onClick={() => setActiveSection(section.key)}
-                sx={{
-                  borderRadius: 2,
-                  mb: 1,
-                  bgcolor: activeSection === section.key ? '#818cf8' : 'inherit',
-                  color: activeSection === section.key ? '#fff' : '#e0e7ff',
-                  transition: 'background 0.2s, color 0.2s',
-                  '&:hover': {
-                    bgcolor: '#a5b4fc',
-                    color: '#18181b',
-                  },
-                }}
-              >
-                <ListItemIcon sx={{ color: 'inherit' }}>{section.icon}</ListItemIcon>
-                <ListItemText primary={section.label} />
-              </ListItemButton>
-            </ListItem>
+            <ListItemButton
+              key={section.key}
+              selected={activeSection === section.key}
+              onClick={() => {
+                setActiveSection(section.key);
+                if (section.key === 'food-diary') navigate('/food-diary');
+                if (section.key === 'bmi') navigate('/bmi');
+                if (section.key === 'body-fat') navigate('/body-fat');
+                if (section.key === 'calorie-estimator') navigate('/calorie-estimator');
+              }}
+              sx={{ borderRadius: 2, mb: 1 }}
+            >
+              <ListItemIcon>{section.icon}</ListItemIcon>
+              <ListItemText primary={section.label} />
+            </ListItemButton>
           ))}
         </List>
         <Divider sx={{ my: 2, bgcolor: '#a5b4fc' }} />
@@ -534,8 +698,58 @@ const Dashboard: React.FC = () => {
       <Modal open={progressModalOpen} onClose={() => setProgressModalOpen(false)}>
         <Fade in={progressModalOpen}>
           <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', bgcolor: '#fff', p: 4, borderRadius: 3, boxShadow: 6, minWidth: 320 }}>
-            <Typography variant="h6" sx={{ mb: 2 }}>Log Progress for {selectedWorkout?.name}</Typography>
+            <Typography variant="h6" sx={{ mb: 2 }}>Log Progress</Typography>
             <form onSubmit={handleAddProgress}>
+              {/* Progress Type Selector */}
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel id="progress-type-label">Progress Type</InputLabel>
+                <Select
+                  labelId="progress-type-label"
+                  value={progressType}
+                  label="Progress Type"
+                  onChange={e => setProgressType(e.target.value)}
+                >
+                  {progressTypes.map(type => (
+                    <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              {/* Workout Selector if not selected */}
+              {(!selectedWorkout || !selectedWorkout.id) && (
+                <FormControl fullWidth sx={{ mb: 2 }}>
+                  <InputLabel id="workout-select-label">Workout</InputLabel>
+                  <Select
+                    labelId="workout-select-label"
+                    value={progressWorkoutId || ''}
+                    label="Workout"
+                    onChange={e => setProgressWorkoutId(Number(e.target.value))}
+                    required
+                  >
+                    {workouts.map(w => (
+                      <MenuItem key={w.id} value={w.id}>{w.name}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
+              {/* Nutrition Fields */}
+              {progressType === 'nutrition' && (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mb: 2 }}>
+                  <TextField label="Calories" type="number" value={nutritionFields.calories} onChange={e => setNutritionFields(f => ({ ...f, calories: e.target.value }))} />
+                  <TextField label="Protein (g)" type="number" value={nutritionFields.protein} onChange={e => setNutritionFields(f => ({ ...f, protein: e.target.value }))} />
+                  <TextField label="Carbs (g)" type="number" value={nutritionFields.carbs} onChange={e => setNutritionFields(f => ({ ...f, carbs: e.target.value }))} />
+                  <TextField label="Fat (g)" type="number" value={nutritionFields.fat} onChange={e => setNutritionFields(f => ({ ...f, fat: e.target.value }))} />
+                </Box>
+              )}
+              {/* Strength Fields */}
+              {progressType === 'strength' && (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mb: 2 }}>
+                  <TextField label="Exercise" value={strengthFields.exercise} onChange={e => setStrengthFields(f => ({ ...f, exercise: e.target.value }))} />
+                  <TextField label="Previous Weight (kg)" type="number" value={strengthFields.previousWeight} onChange={e => setStrengthFields(f => ({ ...f, previousWeight: e.target.value }))} />
+                  <TextField label="New Weight (kg)" type="number" value={strengthFields.newWeight} onChange={e => setStrengthFields(f => ({ ...f, newWeight: e.target.value }))} />
+                  <TextField label="Reps" type="number" value={strengthFields.reps} onChange={e => setStrengthFields(f => ({ ...f, reps: e.target.value }))} />
+                </Box>
+              )}
+              {/* Notes Field */}
               <TextField
                 label="Notes"
                 value={progressNotes}
@@ -646,6 +860,61 @@ const Dashboard: React.FC = () => {
           Progress updated!
         </MuiAlert>
       </Snackbar>
+      {/* Add Exercise Modal */}
+      <Modal open={addExerciseModalOpen} onClose={() => setAddExerciseModalOpen(false)}>
+        <Fade in={addExerciseModalOpen}>
+          <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', bgcolor: '#fff', p: 4, borderRadius: 3, boxShadow: 6, minWidth: 320 }}>
+            <Typography variant="h6" sx={{ mb: 2 }}>Add Exercise to {exerciseTargetWorkout?.name}</Typography>
+            <form onSubmit={handleAddExercise}>
+              <TextField label="Exercise Name" value={exerciseForm.name} onChange={e => setExerciseForm({ ...exerciseForm, name: e.target.value })} fullWidth required sx={{ mb: 2 }} />
+              <TextField label="Sets" type="number" value={exerciseForm.sets} onChange={e => setExerciseForm({ ...exerciseForm, sets: e.target.value })} fullWidth sx={{ mb: 2 }} />
+              <TextField label="Reps" type="number" value={exerciseForm.reps} onChange={e => setExerciseForm({ ...exerciseForm, reps: e.target.value })} fullWidth sx={{ mb: 2 }} />
+              <TextField label="Weight (kg)" type="number" value={exerciseForm.weight} onChange={e => setExerciseForm({ ...exerciseForm, weight: e.target.value })} fullWidth sx={{ mb: 2 }} />
+              <TextField label="Rest (seconds)" type="number" value={exerciseForm.rest} onChange={e => setExerciseForm({ ...exerciseForm, rest: e.target.value })} fullWidth sx={{ mb: 2 }} />
+              <TextField label="Notes" value={exerciseForm.notes} onChange={e => setExerciseForm({ ...exerciseForm, notes: e.target.value })} fullWidth multiline rows={2} sx={{ mb: 2 }} />
+              {exerciseError && <Typography color="error" sx={{ mb: 2 }}>{exerciseError}</Typography>}
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+                <Button onClick={() => setAddExerciseModalOpen(false)} color="secondary" variant="outlined">Cancel</Button>
+                <Button type="submit" variant="contained" color="primary" disabled={exerciseLoading}>{exerciseLoading ? <CircularProgress size={20} /> : 'Add'}</Button>
+              </Box>
+            </form>
+          </Box>
+        </Fade>
+      </Modal>
+      {/* Delete Exercise Confirmation Modal */}
+      <Modal open={deleteExerciseConfirmOpen} onClose={() => setDeleteExerciseConfirmOpen(false)}>
+        <Fade in={deleteExerciseConfirmOpen}>
+          <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', bgcolor: '#fff', p: 4, borderRadius: 3, boxShadow: 6, minWidth: 320 }}>
+            <Typography variant="h6" sx={{ mb: 2 }}>Delete Exercise</Typography>
+            <Typography sx={{ mb: 2 }}>Are you sure you want to delete this exercise?</Typography>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+              <Button onClick={() => setDeleteExerciseConfirmOpen(false)} color="secondary" variant="outlined">Cancel</Button>
+              <Button onClick={handleDeleteExercise} variant="contained" color="error" disabled={deleteExerciseLoading}>{deleteExerciseLoading ? <CircularProgress size={20} /> : 'Delete'}</Button>
+            </Box>
+          </Box>
+        </Fade>
+      </Modal>
+      {/* Edit Exercise Modal */}
+      <Modal open={editExerciseModalOpen} onClose={() => setEditExerciseModalOpen(false)}>
+        <Fade in={editExerciseModalOpen}>
+          <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', bgcolor: '#fff', p: 4, borderRadius: 3, boxShadow: 6, minWidth: 320 }}>
+            <Typography variant="h6" sx={{ mb: 2 }}>Edit Exercise</Typography>
+            <form onSubmit={handleEditExercise}>
+              <TextField label="Exercise Name" value={editExerciseForm.name} onChange={e => setEditExerciseForm({ ...editExerciseForm, name: e.target.value })} fullWidth required sx={{ mb: 2 }} />
+              <TextField label="Sets" type="number" value={editExerciseForm.sets} onChange={e => setEditExerciseForm({ ...editExerciseForm, sets: e.target.value })} fullWidth sx={{ mb: 2 }} />
+              <TextField label="Reps" type="number" value={editExerciseForm.reps} onChange={e => setEditExerciseForm({ ...editExerciseForm, reps: e.target.value })} fullWidth sx={{ mb: 2 }} />
+              <TextField label="Weight (kg)" type="number" value={editExerciseForm.weight} onChange={e => setEditExerciseForm({ ...editExerciseForm, weight: e.target.value })} fullWidth sx={{ mb: 2 }} />
+              <TextField label="Rest (seconds)" type="number" value={editExerciseForm.rest} onChange={e => setEditExerciseForm({ ...editExerciseForm, rest: e.target.value })} fullWidth sx={{ mb: 2 }} />
+              <TextField label="Notes" value={editExerciseForm.notes} onChange={e => setEditExerciseForm({ ...editExerciseForm, notes: e.target.value })} fullWidth multiline rows={2} sx={{ mb: 2 }} />
+              {editExerciseError && <Typography color="error" sx={{ mb: 2 }}>{editExerciseError}</Typography>}
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+                <Button onClick={() => setEditExerciseModalOpen(false)} color="secondary" variant="outlined">Cancel</Button>
+                <Button type="submit" variant="contained" color="primary" disabled={editExerciseLoading}>{editExerciseLoading ? <CircularProgress size={20} /> : 'Save'}</Button>
+              </Box>
+            </form>
+          </Box>
+        </Fade>
+      </Modal>
     </Box>
   );
 };

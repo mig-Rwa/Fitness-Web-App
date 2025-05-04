@@ -31,6 +31,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/workouts', require('./routes/workouts'));
 app.use('/api/progress', require('./routes/progress'));
+const exercisesRouter = require('./routes/exercises');
+app.use('/api/workouts', exercisesRouter);
+const foodRouter = require('./routes/food');
+app.use('/api/food', foodRouter);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

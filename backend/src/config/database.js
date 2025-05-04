@@ -33,6 +33,19 @@ db.serialize(() => {
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )`);
 
+    // Exercises table
+    db.run(`CREATE TABLE IF NOT EXISTS exercises (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        workout_id INTEGER NOT NULL,
+        name TEXT NOT NULL,
+        sets INTEGER,
+        reps INTEGER,
+        weight REAL,
+        rest INTEGER,
+        notes TEXT,
+        FOREIGN KEY (workout_id) REFERENCES workouts(id) ON DELETE CASCADE
+    )`);
+
     // Progress table
     db.run(`CREATE TABLE IF NOT EXISTS progress (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -42,6 +55,21 @@ db.serialize(() => {
         notes TEXT,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
         FOREIGN KEY (workout_id) REFERENCES workouts(id) ON DELETE CASCADE
+    )`);
+
+    // Food entries table
+    db.run(`CREATE TABLE IF NOT EXISTS food_entries (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        date TEXT NOT NULL,
+        food TEXT NOT NULL,
+        calories INTEGER,
+        protein REAL,
+        carbs REAL,
+        fat REAL,
+        meal_type TEXT,
+        portion TEXT,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )`);
 });
 
