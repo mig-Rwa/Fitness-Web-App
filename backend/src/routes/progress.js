@@ -53,7 +53,7 @@ router.get('/workout/:workoutId', auth, (req, res) => {
 
 // Create a new progress entry
 router.post('/', auth, (req, res) => {
-    const { workout_id, notes } = req.body;
+    const { workout_id, notes, type = 'workout', data = null } = req.body;
 
     if (!workout_id) {
         return res.status(400).json({
@@ -79,8 +79,8 @@ router.post('/', auth, (req, res) => {
 
         // Create progress entry
         db.run(
-            'INSERT INTO progress (user_id, workout_id, notes) VALUES (?, ?, ?)',
-            [req.user.id, workout_id, notes],
+            'INSERT INTO progress (user_id, workout_id, notes, type, data) VALUES (?, ?, ?, ?, ?)',
+            [req.user.id, workout_id, notes, type, data ? JSON.stringify(data) : null],
             function(err) {
                 if (err) {
                     return res.status(500).json({
@@ -95,6 +95,8 @@ router.post('/', auth, (req, res) => {
                         user_id: req.user.id,
                         workout_id,
                         notes,
+                        type,
+                        data,
                         date: new Date().toISOString()
                     }
                 });
@@ -105,11 +107,10 @@ router.post('/', auth, (req, res) => {
 
 // Update a progress entry
 router.put('/:id', auth, (req, res) => {
-    const { notes } = req.body;
-
+    const { notes, type, data } = req.body;
     db.run(
-        'UPDATE progress SET notes = ? WHERE id = ? AND user_id = ?',
-        [notes, req.params.id, req.user.id],
+        'UPDATE progress SET notes = ?, type = ?, data = ? WHERE id = ? AND user_id = ?',
+        [notes, type || 'workout', data ? JSON.stringify(data) : null, req.params.id, req.user.id],
         function(err) {
             if (err) {
                 return res.status(500).json({

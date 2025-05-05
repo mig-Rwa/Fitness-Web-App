@@ -127,6 +127,7 @@ const Dashboard: React.FC = () => {
   const [progressWorkoutId, setProgressWorkoutId] = useState<number | null>(null);
   const [nutritionFields, setNutritionFields] = useState({ calories: '', protein: '', carbs: '', fat: '' });
   const [strengthFields, setStrengthFields] = useState({ exercise: '', previousWeight: '', newWeight: '', reps: '' });
+  const [progressTypeFilter, setProgressTypeFilter] = useState('all');
 
   React.useEffect(() => {
     const fetchData = async () => {
@@ -310,6 +311,21 @@ const Dashboard: React.FC = () => {
         return (
           <Card sx={{ width: '100%', maxWidth: 700, mb: 4, borderRadius: 3, boxShadow: 2 }}>
             <CardContent>
+              {/* Progress Type Filter Dropdown */}
+              <FormControl sx={{ mb: 2, minWidth: 180 }}>
+                <InputLabel id="progress-type-filter-label">Filter by Type</InputLabel>
+                <Select
+                  labelId="progress-type-filter-label"
+                  value={progressTypeFilter}
+                  label="Filter by Type"
+                  onChange={e => setProgressTypeFilter(e.target.value)}
+                >
+                  <MenuItem value="all">All</MenuItem>
+                  <MenuItem value="workout">Workout</MenuItem>
+                  <MenuItem value="nutrition">Nutrition</MenuItem>
+                  <MenuItem value="strength">Strength</MenuItem>
+                </Select>
+              </FormControl>
               <Box sx={{ mb: 4 }}>
                 <Line data={data} options={options} />
               </Box>
@@ -325,21 +341,40 @@ const Dashboard: React.FC = () => {
               ) : progress.length === 0 ? (
                 <Typography color="text.secondary">No progress entries yet. Log your first progress!</Typography>
               ) : (
-                progress.map((item, idx) => (
-                  <Fade in={true} timeout={400 + idx * 100} key={item.id}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, alignItems: 'center', p: 1, borderRadius: 2, bgcolor: idx % 2 === 0 ? '#f3f4f6' : '#e0e7ff', boxShadow: 1 }}>
-                      <Box>
-                        <Typography sx={{ fontWeight: 600 }}>{item.date?.slice(0, 10)}</Typography>
-                        <Typography variant="body2">{item.notes || 'Progress logged'}</Typography>
-                        <Typography variant="caption" color="text.secondary">Workout ID: {item.workout_id}</Typography>
-                      </Box>
-                      <Box sx={{ display: 'flex', gap: 1 }}>
-                        <IconButton color="primary" onClick={() => openProgressEditModal(item)}><EditNoteIcon /></IconButton>
-                        <IconButton color="error" onClick={() => handleProgressDelete(item.id)}><DeleteForeverIcon /></IconButton>
-                      </Box>
-                    </Box>
-                  </Fade>
-                ))
+                progress
+                  .filter(item => progressTypeFilter === 'all' || (item.type || 'workout') === progressTypeFilter)
+                  .map((item, idx) => {
+                    let extra = null;
+                    if (item.data) {
+                      try { extra = JSON.parse(item.data); } catch {}
+                    }
+                    return (
+                      <Fade in={true} timeout={400 + idx * 100} key={item.id}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, alignItems: 'center', p: 1, borderRadius: 2, bgcolor: idx % 2 === 0 ? '#f3f4f6' : '#e0e7ff', boxShadow: 1 }}>
+                          <Box>
+                            <Typography sx={{ fontWeight: 600 }}>{item.date?.slice(0, 10)}</Typography>
+                            <Typography variant="body2">{item.notes || 'Progress logged'}</Typography>
+                            <Typography variant="caption" color="text.secondary">Type: {item.type || 'workout'}</Typography>
+                            {item.type === 'nutrition' && extra && (
+                              <Typography variant="caption" color="secondary" sx={{ display: 'block' }}>
+                                Calories: {extra.calories}, Protein: {extra.protein}g, Carbs: {extra.carbs}g, Fat: {extra.fat}g
+                              </Typography>
+                            )}
+                            {item.type === 'strength' && extra && (
+                              <Typography variant="caption" color="secondary" sx={{ display: 'block' }}>
+                                Exercise: {extra.exercise}, Previous: {extra.previousWeight}kg, New: {extra.newWeight}kg, Reps: {extra.reps}
+                              </Typography>
+                            )}
+                            <Typography variant="caption" color="text.secondary">Workout ID: {item.workout_id}</Typography>
+                          </Box>
+                          <Box sx={{ display: 'flex', gap: 1 }}>
+                            <IconButton color="primary" onClick={() => openProgressEditModal(item)}><EditNoteIcon /></IconButton>
+                            <IconButton color="error" onClick={() => handleProgressDelete(item.id)}><DeleteForeverIcon /></IconButton>
+                          </Box>
+                        </Box>
+                      </Fade>
+                    );
+                  })
               )}
             </CardContent>
           </Card>

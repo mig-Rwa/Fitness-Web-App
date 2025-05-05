@@ -73,6 +73,7 @@ router.post('/', auth, (req, res) => {
         [req.user.id, name, description],
         function(err) {
             if (err) {
+                console.log(err);
                 return res.status(500).json({
                     status: 'error',
                     message: 'Error creating workout'

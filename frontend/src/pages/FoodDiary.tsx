@@ -122,7 +122,7 @@ const FoodDiary: React.FC = () => {
     }
   };
   const handleDelete = async (id: number) => {
-    if (!window.confirm('Delete this entry?')) return;
+    if (!window.confirm('Delete this entry?')) return;o
     setLoading(true);
     setError('');
     try {
