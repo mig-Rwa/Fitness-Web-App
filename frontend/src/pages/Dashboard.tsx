@@ -34,6 +34,7 @@ import EditNoteIcon from '@mui/icons-material/EditNote';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import RestaurantIcon from '@mui/icons-material/Restaurant';
 import LocalDiningIcon from '@mui/icons-material/LocalDining';
+import ExerciseLibraryModal from '../components/ExerciseLibraryModal';
 
 ChartJS.register(
   CategoryScale,
@@ -128,6 +129,8 @@ const Dashboard: React.FC = () => {
   const [nutritionFields, setNutritionFields] = useState({ calories: '', protein: '', carbs: '', fat: '' });
   const [strengthFields, setStrengthFields] = useState({ exercise: '', previousWeight: '', newWeight: '', reps: '' });
   const [progressTypeFilter, setProgressTypeFilter] = useState('all');
+  const [exerciseLibraryOpen, setExerciseLibraryOpen] = useState(false);
+  const [exerciseLibraryTargetWorkout, setExerciseLibraryTargetWorkout] = useState<any>(null);
 
   React.useEffect(() => {
     const fetchData = async () => {
@@ -255,8 +258,8 @@ const Dashboard: React.FC = () => {
                               ))}
                             </Box>
                           )}
-                          <Button variant="contained" color="secondary" size="small" sx={{ mt: 1, width: 'fit-content' }} onClick={() => handleOpenAddExerciseModal(item)}>
-                            Add Exercise
+                          <Button variant="contained" color="secondary" size="small" sx={{ mt: 1, width: 'fit-content' }} onClick={() => handleOpenExerciseLibrary(item)}>
+                            Exercise Library
                           </Button>
                         </Box>
                       </Fade>
@@ -526,8 +529,10 @@ const Dashboard: React.FC = () => {
       // For now, just close the modal and refresh
       setProgressEditModalOpen(false);
       // Refresh progress
-      const progressData = await getProgress(token);
-      setProgress(progressData.data || []);
+      if (token) {
+        const progressData = await getProgress(token);
+        setProgress(progressData.data || []);
+      }
     } catch (e) {
       setProgressEditError('Failed to delete progress.');
     } finally {
@@ -627,6 +632,11 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  const handleOpenExerciseLibrary = (workout: any) => {
+    setExerciseLibraryTargetWorkout(workout);
+    setExerciseLibraryOpen(true);
+  };
+
   return (
     <Box sx={{ display: 'flex', bgcolor: darkMode ? '#18181b' : '#f8fafc', minHeight: '100vh' }}>
       <CssBaseline />
@@ -648,22 +658,33 @@ const Dashboard: React.FC = () => {
         </Box>
         <Divider sx={{ my: 2, bgcolor: '#a5b4fc' }} />
         <List>
-          {sections.map(section => (
-            <ListItemButton
-              key={section.key}
-              selected={activeSection === section.key}
-              onClick={() => {
-                setActiveSection(section.key);
-                if (section.key === 'food-diary') navigate('/food-diary');
-                if (section.key === 'bmi') navigate('/bmi');
-                if (section.key === 'body-fat') navigate('/body-fat');
-                if (section.key === 'calorie-estimator') navigate('/calorie-estimator');
-              }}
-              sx={{ borderRadius: 2, mb: 1 }}
-            >
-              <ListItemIcon>{section.icon}</ListItemIcon>
-              <ListItemText primary={section.label} />
-            </ListItemButton>
+          {sections.map((section, idx) => (
+            <React.Fragment key={section.key}>
+              <ListItemButton
+                selected={activeSection === section.key}
+                onClick={() => {
+                  setActiveSection(section.key);
+                  if (section.key === 'food-diary') navigate('/food-diary');
+                  if (section.key === 'bmi') navigate('/bmi');
+                  if (section.key === 'body-fat') navigate('/body-fat');
+                  if (section.key === 'calorie-estimator') navigate('/calorie-estimator');
+                }}
+                sx={{ borderRadius: 2, mb: 1 }}
+              >
+                <ListItemIcon>{section.icon}</ListItemIcon>
+                <ListItemText primary={section.label} />
+              </ListItemButton>
+              {/* Insert Exercise Library button right after Add Workout */}
+              {section.key === 'add' && (
+                <ListItemButton
+                  onClick={() => setExerciseLibraryOpen(true)}
+                  sx={{ borderRadius: 2, mb: 1, ml: 3, bgcolor: '#a5b4fc', color: '#18181b', '&:hover': { bgcolor: '#818cf8', color: '#fff' } }}
+                >
+                  <ListItemIcon><FitnessCenterIcon /></ListItemIcon>
+                  <ListItemText primary="Exercise Library" />
+                </ListItemButton>
+              )}
+            </React.Fragment>
           ))}
         </List>
         <Divider sx={{ my: 2, bgcolor: '#a5b4fc' }} />
@@ -950,6 +971,27 @@ const Dashboard: React.FC = () => {
           </Box>
         </Fade>
       </Modal>
+      {/* Exercise Library Modal */}
+      <ExerciseLibraryModal
+        open={exerciseLibraryOpen}
+        onClose={() => {
+          setExerciseLibraryOpen(false);
+          setExerciseLibraryTargetWorkout(null);
+        }}
+        onAdd={async (selectedExercises) => {
+          if (!token || !exerciseLibraryTargetWorkout) return;
+          for (const ex of selectedExercises) {
+            await addExercise(token, exerciseLibraryTargetWorkout.id, {
+              name: ex.name,
+            });
+          }
+          setExerciseLibraryOpen(false);
+          setExerciseLibraryTargetWorkout(null);
+          // Refresh workouts
+          const data = await getWorkouts(token);
+          setWorkouts(data.data || []);
+        }}
+      />
     </Box>
   );
 };

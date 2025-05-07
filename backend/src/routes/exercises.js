@@ -62,4 +62,29 @@ router.delete('/exercise/:id', auth, (req, res) => {
     });
 });
 
+// Get all library exercises (optionally filtered)
+router.get('/', (req, res) => {
+    const { muscle_group, difficulty, search } = req.query;
+    let query = 'SELECT * FROM exercises WHERE workout_id IS NULL';
+    let params = [];
+    if (muscle_group) {
+        query += ' AND muscle_group = ?';
+        params.push(muscle_group);
+    }
+    if (difficulty) {
+        query += ' AND difficulty = ?';
+        params.push(difficulty);
+    }
+    if (search) {
+        query += ' AND name LIKE ?';
+        params.push(`%${search}%`);
+    }
+    db.all(query, params, (err, rows) => {
+        if (err) {
+            return res.status(500).json({ status: 'error', message: 'Error fetching exercises' });
+        }
+        res.json({ status: 'success', data: rows });
+    });
+});
+
 module.exports = router; 
